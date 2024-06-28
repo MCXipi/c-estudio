@@ -8,7 +8,7 @@ void copy(char to[], char from[]);
 int getline(char stg[], int lim){
     int c, i; /*Para cada caracter y el indice*/
 
-    for (i = 0; i < lim - 1 && (c = getchar()) != EOF && c != '\n'; ++i)
+    for (i = 0; i < lim - 1 && (c = getchar()) != EOF && c != '\n'; ++i) /*¿Por que lim-1? Volver al aprender arrays*/
         stg[i] = c; /*Asigna al arreglo cada caracter de la palabra*/
     
     if (c == '\n'){ /*Agrega '\n' al final del arreglo como normalmente habría pasado (?) -> Permite el salir del getchar cuando se termina la palabra de manera natural, sin concatenar palabaras ni necesitar EOF para salir del ciclo.*/
