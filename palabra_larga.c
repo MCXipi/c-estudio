@@ -10,8 +10,9 @@ int getline(char stg[], int lim){
 
     for (i = 0; i < lim - 1 && (c = getchar()) != EOF; ++i)
         stg[i] = c; /*Asigna al arreglo cada caracter de la palabra*/
-    ++i;
-    stg[i] = '\0'; /*Agrega el fin de linea al arreglo de caracteres*/
+    if (stg[i-1] == '\n')/*Este enfoque omite la detención del for cuando hay un '\n', lo que no es optimo pues implica la concatenacion de una linea con otra hasta que hay un EOF, y requiere un EOF para terminar todo, pero sirve igual*/
+        stg[i] = '\0'; /*Agrega el fin de linea al arreglo de caracteres*/
+    
     return i; /*Devolver el valor de la longitud absoluta de la palabra*/
 }
 
