@@ -8,13 +8,9 @@ void copy(char to[], char from[]);
 int getline(char stg[], int lim){
     int c, i; /*Para cada caracter y el indice*/
 
-    for (i = 0; i < lim - 1 && (c = getchar()) != EOF && c != '\n'; ++i)
+    for (i = 0; i < lim - 1 && (c = getchar()) != EOF; ++i)
         stg[i] = c; /*Asigna al arreglo cada caracter de la palabra*/
-    
-    if (c == '\n'){ /*Agrega '\n' al final del arreglo como normalmente habría pasado (?)*/
-        stg[i] = c;
-        ++i; /*Aumenta en uno el indice para agregar el fin del arreglo*/
-    }
+    ++i;
     stg[i] = '\0'; /*Agrega el fin de linea al arreglo de caracteres*/
     return i; /*Devolver el valor de la longitud absoluta de la palabra*/
 }
