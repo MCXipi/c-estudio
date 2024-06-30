@@ -8,16 +8,18 @@
 void getline(char[], int);
 
 void getline(char espacio[], int limite) {
-    int indice, caracter, paro;
+    int indice, caracter, paro, reemplazo;
 
     paro = N;
 
     for (indice = 0; indice < limite - 1 && (caracter = getchar()) != EOF && caracter != '\n'; ++indice)
         if (caracter != '\t')
             espacio[indice] = caracter;
-        else
-            for (indice; indice < limite - 1 && indice < indice + paro; ++indice)
+        else{
+            for (reemplazo = indice; reemplazo < limite - 1 && reemplazo < indice + paro; ++reemplazo)
                 espacio[indice] = '_';
+            indice = reemplazo - 1;
+        }
 
     if (caracter == '\n'){
         espacio[indice] = caracter;
