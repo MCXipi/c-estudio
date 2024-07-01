@@ -2,22 +2,24 @@
 
 /*Reemplazar las tabulaciones con n espacios en blanco señalados por '_', usando la funcion getline y main*/
 
-#define MAX 100
+#define MAX 1000
 #define N 8
 
 void getline(char[], int);
 
 void getline(char espacio[], int limite) {
-    int indice, caracter, paro;
+    int indice, caracter, i, espacios;
 
-    paro = N;
-
+    espacios = N;
+    
     for (indice = 0; indice < limite - 1 && (caracter = getchar()) != EOF && caracter != '\n'; ++indice)
         if (caracter != '\t')
             espacio[indice] = caracter;
         else
-            for (indice; indice < limite - 1 && indice < indice + paro; ++indice)
+            for (i = 0; indice < limite - 1 && i < espacios; ++i){
                 espacio[indice] = '_';
+                ++indice;
+            }
 
     if (caracter == '\n'){
         espacio[indice] = caracter;
