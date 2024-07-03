@@ -2,7 +2,7 @@
 
 /*Hacer una cuenta de cuantas palabras tienen X caracteres y representarlos con '-'
 para un maximo de 9 caracteres de longitud*/
-main(){
+void main(){
     int rep_longitud[10], ncar, c, i, n; /*¡Hay que declarar hasta los indices!*/
 
     ncar = 0;
