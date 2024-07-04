@@ -30,21 +30,23 @@ int transform(char line[]) {
         jump = 2;
     else
         jump = 0;
-    
+
     largo = strlen(line) - jump; // El largo del hexadecimal define los exponentes a utilizar.
     for (i = 0 + jump; isxdigit(line[i]) && (i - jump) < (largo + 2) && line[i] != '\0'; ++i){
         //Trabajaré normalmente con los digitos. Para los digitos A-F aprovecharé los codigos ASCII.
         exponente = largo - (i - jump) - 1; // El exponente estudiado es el largo del numero menos el indice actual menos el salto que se tuvo que hacer al principio, menos uno.
-        if ('0' <= line[i] <= '9' && exponente != 0) // Si el caracter es un exponente del 0 al 9 y no se está trabajando el primer exponente (0)
+
+        if ('0' <= line[i] && line[i] <= '9' && exponente != 0) // Si el caracter es un exponente del 0 al 9 y no se está trabajando el primer exponente (0)
             num = num + (line[i] - '0') * pow(16, exponente);
-        else if ('0' <= line[i] <= '9' && exponente == 0)
+        else if ('0' <= line[i] && line[i] <= '9' && exponente == 0) // line[i] debe ser mayor a 0 y aparte menor a 9. No existen la relacion '0' < line[i] < '9' como en python.
             num = num + (line[i] - '0');
+
         else if (exponente != 0) // Si no es un exponente del 0 al 9 y no se está trabajando el primer exponente
             num = num + (toupper(line[i]) - '7') * pow(16, exponente); // restar '7' es lo mismo que restar 55.
         else
             num = num + (toupper(line[i]) - '7');
-        printf("Caracter: %c, num: %d, exp: %d\n", line[i], num, exponente);
     }
+
     if ((!isxdigit(line[i]) && line[i] != '\0') || (i - jump) == (largo + 2)){
         num = -1;
         printf("Invalid hex number.\n"); 
@@ -60,8 +62,7 @@ void main() {
     printf("Ingresa tu codigo hexadecimal:\n");
     getline(codigo, MAX);
     num_equiv = transform(codigo);
-    printf("El numero equivalente de %s es: %d \n", codigo, num_equiv);
+    printf("El numero equivalente a %s es %d \n", codigo, num_equiv);
 }
 
 //Input de prueba: "0x17A0", "0X17a0", "17A0".
-//Revisar: El trabajo con letras no está funcionando!!!
