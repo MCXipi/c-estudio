@@ -7,7 +7,7 @@
 // Los unicos bits que debo cambiar son los n bits, tomando como referencia los n bits más a la derecha de y. Por eso, los bits que debo trasladar son los de y, o
 // habrá perdida de datos en x --> Debo mover a y p - n + 1 bits a la izquierda.
 
-// x = 00110101 p = 4, n = 3.
+// x = 001 101 01 p = 4, n = 3.
 // y = 00011 011. 
 
 // Puedo limpiar a y de los bits que no necesito, con el siguiente procedimiento
@@ -25,11 +25,37 @@
 
 // y = y & z = 00000 011 --> & hace que solo si AMBOS son 1, el resultado sea 1. NO que ambos sean iguales.
 
-//Para cambiar los bits de x:
-// y = 000 011 00 y << p - n + 1
+// Por otro lado, podemos limpiar los bits de X que deben ser reemplazados
+// z = 000 000 00
 // x = 001 101 01
 
+// z = 111 111 11 ~0
+// x = 001 101 01
 
+// z = 111 000 00 (~0) << p + 1
+// x = 001 101 01
+
+// z = 000 111 11 ~((~0) << p)
+// x = 001 101 01
+
+// z = 000 001 11 (~((~0) << p)) >> p - n + 1
+// x = 001 101 01
+
+// z = 000 111 00 ((~((~0) << p)) >> p - n + 1) << p - n + 1
+// x = 001 101 01
+
+// z = 111 000 11 ~(((~((~0) << p)) >> p - n + 1) << p - n + 1)
+// x = 001 101 01
+
+// z & x = 001 000 01 x ahora limpio.
+
+//ahora se tiene
+
+// y = 000 011 00 (<< p - n + 1)
+// x = 001 000 01
+
+// x | y = 001 011 01 el nuevo x.
+ 
 
 //void main(){
 //    int x = 3; // 0000 0011
@@ -43,13 +69,18 @@
 int setbits(int, int, int, int);
 
 int setbits(x, p, n, y){
-    int z;
+    int mask;
+    mask = 0; // Funcionará como mascara, para limpiar y arreglar x e y y dejarlos listos.
 
-    z = ~((~0) << n); // Quedan como 1 las posiciones de bits que queremos mantener intactos
-    y = y & z; // Limpiamos los bits innecesarios y dejamos solo los que buscamos cambiar en X
+    mask = ~((~0) << n); // Quedan como 1 las posiciones de bits que queremos mantener intactos
+    y = y & mask; // Limpiamos los bits innecesarios y dejamos solo los que buscamos cambiar en X
     y = y << (p - n + 1); // Se colocan los bits a cambiar en posicion
 
-
+    mask = 0;
+    mask = ~((( ~( (~0) << (p + 1) )) >> (p - n + 1) ) << p - n + 1); // Se hace una mascara para limpiar los bits de x a limpiar
+    x = mask & x;
+ 
+    x = x | y; // Se ponen los bits de y en x.
 
     return x;
 }
@@ -59,9 +90,10 @@ void main(){
 
     p = 4;
     n = 3;
-    x = 
-    y = 
+    x = 53; // 00110101
+    y = 27; // 00011011
+    printf("\nEl numero de bits a modificar es %d, a partir del %d, tomando desde la posicion %d, en un campo de %d bits.\n", x, y, p, n);
     x = setbits(x, p, n, y);
-    printf("El nuevo x es: %d \n", x); 
+    printf("El nuevo x es: %d.\n", x); // Resultado debe ser 45, 00101101.
 }
 
