@@ -3,3 +3,4 @@
 *.ilk
 *.json
 */.vscode
+*.o
