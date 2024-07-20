@@ -3,7 +3,7 @@
 // Funcion getline para utilizar en cualquier archivo. stdio.h tiene una funcion pero para efectos del alcance del libro
 // no las usare
 
-int obtenerlinea(char s[], int lim) {
+int saveline(char s[], int lim) {
     int i, c;
 
     for (i = 0; i < --lim && (c = getchar()) != EOF && c != '\n'; ++i)
