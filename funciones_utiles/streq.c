@@ -10,11 +10,13 @@ int streq(char s[], char base[]) {
     len_base = strlen(base);
 
     trim(s);
-    if (strlen(s) == len_base);
-        for (i = 0; s[i] == base[i]; ++i) //
+    if (strlen(s) == len_base)
+        for (i = 0; s[i] == base[i] && s[i] != '\0'; ++i)
             ;
+    else
+        return 0;
             
-    if (i + 1 == len_base)
+    if (i == len_base)
         return 1;
     else
         return 0;
