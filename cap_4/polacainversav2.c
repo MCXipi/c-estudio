@@ -10,19 +10,67 @@
 #define MAXVAR 27
 enum operations {NUMBER = '0', COS = '1', SIN = '2', EXP, POW, CALL, EXCHANGE, CLEAN, DUPLICATE, VARWORK};
 
-char buf[BUFSIZE];
-int bufp = 0;
+int sp = 0;
+double val[MAXVAL];
+
+void push(double f) {
+    if (sp < MAXVAL)
+        val[sp++] = f;
+    else
+        printf("error: pila llena, no puede efectar push %g\n", f);
+}
+
+double pop(void) {
+    if (sp > 0)
+        return val[--sp]; // Porque push deja el indice sp en un espacio en blanco
+    else {
+        printf("error: pila vacia\n");
+        return 0.0;
+    }
+}
+
 char var;
+double vars[MAXVAR]; // Almacenamiento de variables.
+char var_buf[MAXVAR]; // Buffer que almacenará las variables utilizadas desde la 'a' hasta la 'z'
+int var_buf_last; // Posicion de la ultima variable almacenada
+
+void save_var() { // Funcion para guardar el pop() en la variable.
+    int i;
+
+    if(check_var()) // Si ya existe, imprimela
+        printf("\t%c = %.8g\n", var, vars[var - 'a']);
+        
+    if (sp > 0) { // Si hay al menos un numero en el historial, guardalo
+        vars[var - 'a'] = pop();
+        for (i = 0; i <= var_buf_last && var_buf[i] != var; ++i)
+            ;
+        if (i > var_buf_last) {
+            var_buf[++var_buf_last] = var;
+        }
+    }
+}
+
+int check_var() {
+    int i;
+    for (i = 0; i <= var_buf_last && var_buf[i] != var; ++i)
+        ;
+    return (i > var_buf_last) ? 0 : 1;
+}
+
+int buf;
+int buf_used = 0; // Tambien es posible asignarle el valor buf = EOF para controlar si está vacio o no.
 
 void ungetch(int c) {
-    if (bufp >= BUFSIZE)
-        printf("ungetch: demasiados caracteres\n");
-    else
-        buf[bufp++] = c; // Si no se utilizara esta funcion, un caracter despues del final de un numero si o si se perdería al solicitar un nuevo c 
+    buf = c;
 }
 
 int getch(void) {
-    return (bufp > 0 ) ? buf[--bufp] : getchar();
+    if (buf_used){
+        buf_used = 0;
+        return buf;
+    }
+    else
+        return getchar();
 }
 
 int getop(char s[]) {
@@ -30,16 +78,27 @@ int getop(char s[]) {
 
     while ((s[0] = c = tolower(getch())) == ' ' || c == '\t')
         ;
+
+    // Para evitar el uso de getch y ungetch se necesitaria el siguiente codigo:
+    //    while ((s[0] = c = tolower(getchar())) == ' ' || c == '\t')
+    //      ;
     
     if (c == '\n')
         return c;
 
-    for (i = 1; !isspace(c = tolower(getch())); ++i)
-        s[i] = c;
+    // for (i = 1; c != EOF && !isspace(c = tolower(getchar())); ++i)
+    //    s[i] = c;
+
+    // Donde todo lo demás sería igual.
+
+    for (i = 1; c != EOF && !isspace(c = tolower(getch())); ++i)
+        s[i] = c; // Escribir la operacion entera, que está separada por espacios a ambos lados.
     s[i] = '\0'; 
     
     if (c != EOF)
         ungetch(c);
+    else
+        return c;
 
     if (s[1] == '\0') {
         if (isalpha(s[0])) {
@@ -76,25 +135,6 @@ int getop(char s[]) {
     else
         return 0;
     
-}
-
-int sp = 0;
-double val[MAXVAL];
-
-void push(double f) {
-    if (sp < MAXVAL)
-        val[sp++] = f;
-    else
-        printf("error: pila llena, no puede efectar push %g\n", f);
-}
-
-double pop(void) {
-    if (sp > 0)
-        return val[--sp]; // Porque push deja el indice sp en un espacio en blanco
-    else {
-        printf("error: pila vacia\n");
-        return 0.0;
-    }
 }
 
 double call(){ // LLama al elemento tope de la pila
@@ -146,32 +186,11 @@ int streq(char s[], char base[]) {
         return 0;
 }
 
-char var;
-double vars[MAXVAR]; // Almacenamiento de variables.
-char var_buf[MAXVAR]; // Buffer que almacenará las variables utilizadas desde la 'a' hasta la 'z'
-int var_buf_last; // Posicion de la ultima variable almacenada
-
-void save_var() { // Funcion para guardar el pop() en la variable.
+void ungets(char s[]) {
     int i;
 
-    if(check_var()) // Si ya existe, imprimela
-        printf("\t%c = %.8g\n", var, vars[var - 'a']);
-        
-    if (sp > 0) { // Si hay al menos un numero en el historial, guardalo
-        vars[var - 'a'] = pop();
-        for (i = 0; i <= var_buf_last && var_buf[i] != var; ++i)
-            ;
-        if (i > var_buf_last) {
-            var_buf[++var_buf_last] = var;
-        }
-    }
-}
-
-int check_var() {
-    int i;
-    for (i = 0; i <= var_buf_last && var_buf[i] != var; ++i)
-        ;
-    return (i > var_buf_last) ? 0 : 1;
+    for (i = 0; s[i] != '\0'; ++i) // La funcion ungets solamente debe hacer ungetch a la cadena s completa. No necesita saber nada de buf
+        ungetch(s[i]); 
 }
 
 int main() {
