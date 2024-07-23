@@ -8,7 +8,7 @@
 #define BUFSIZE 100
 #define MAXVAL 100
 #define MAXVAR 27
-enum operations {NUMBER = '0', COS = '1', SIN = '2', EXP, POW, CALL, EXCHANGE, CLEAN, DUPLICATE, SAVE, GET};
+enum operations {NUMBER = '0', COS = '1', SIN = '2', EXP, POW, CALL, EXCHANGE, CLEAN, DUPLICATE, VARWORK};
 
 char buf[BUFSIZE];
 int bufp = 0;
@@ -42,8 +42,12 @@ int getop(char s[]) {
         ungetch(c);
 
     if (s[1] == '\0') {
-        return (isdigit(s[0]) ? NUMBER : s[0]); // En el caso de que la operacion sea de un solo caracter. Si funciona o no, depende de main.
-
+        if (isalpha(s[0])) {
+            var = tolower(s[0]);
+            return VARWORK;
+        }
+        else
+            return (isdigit(s[0]) ? NUMBER : s[0]); // En el caso de que la operacion sea de un solo caracter. Si funciona o no, depende de main.
     }
     if (s[0] == '-' || s[0] == '+' || isdigit(s[0])) { // Si no era un comando era un numero, y si este numero empieza con algo distinto a -, + o un digito, entonces está mal escrito.
         for (i = 0; s[i] != '\0'; ++i)
@@ -69,10 +73,6 @@ int getop(char s[]) {
         return CLEAN;
     else if (streq(s, "duplicate"))
         return DUPLICATE;
-    else if (streq(s, "save"))
-        return SAVE;
-    else if (streq(s, "get"))
-        return GET;
     else
         return 0;
     
@@ -146,6 +146,34 @@ int streq(char s[], char base[]) {
         return 0;
 }
 
+char var;
+double vars[MAXVAR]; // Almacenamiento de variables.
+char var_buf[MAXVAR]; // Buffer que almacenará las variables utilizadas desde la 'a' hasta la 'z'
+int var_buf_last; // Posicion de la ultima variable almacenada
+
+void save_var() { // Funcion para guardar el pop() en la variable.
+    int i;
+
+    if(check_var()) // Si ya existe, imprimela
+        printf("\t%c = %.8g\n", var, vars[var - 'a']);
+        
+    if (sp > 0) { // Si hay al menos un numero en el historial, guardalo
+        vars[var - 'a'] = pop();
+        for (i = 0; i <= var_buf_last && var_buf[i] != var; ++i)
+            ;
+        if (i > var_buf_last) {
+            var_buf[++var_buf_last] = var;
+        }
+    }
+}
+
+int check_var() {
+    int i;
+    for (i = 0; i <= var_buf_last && var_buf[i] != var; ++i)
+        ;
+    return (i > var_buf_last) ? 0 : 1;
+}
+
 int main() {
     int type;
     double op1, op2, last;
@@ -184,6 +212,9 @@ int main() {
                 break;
             case DUPLICATE:
                 duplicate();
+                break;
+            case VARWORK:
+                save_var();
                 break;
             case '+':
                 push(pop() + pop());
