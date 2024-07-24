@@ -24,6 +24,7 @@ int getch(void) {
 
 int getop(char s[]) {
     int i, c;
+    // static int saved; Para el ejercicio 4-11, si desearamos dejar de utilizar ungetch y suponemos que solo se guardará un caracter, podemos usar una variable estatica.
 
     while ((s[0] = c = getch()) == ' ' || c == '\t')
         ;
@@ -42,6 +43,7 @@ int getop(char s[]) {
 
     s[i] = '\0';
     if (c != EOF)
+        // saved = c; de esta manera se almacena y no se pierde, al ser variable estatica.
         ungetch(c); // Guarda el caracter que viene. Getchar lo obtendrá denuevo, y si es operando va a seguir llamando los demas numeros de la entrada, y si es operador, lo retorna.
     return NUMBER;
 }
