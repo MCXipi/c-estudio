@@ -1,32 +1,23 @@
 #include <stdio.h>
 #include <string.h>
 
-// [a, b, c, d, e, f] ----> Caso par
-// 2 (c)     y 2 + 1 (d); 
-// 2 - 1 (b) y 2 + 2 (e);
-// 2 - 2 (a) y 2 + 3 (f);
-
-// [a, b, c, d, e, f, g] -> Caso impar
-//     3 (d)            ;
-// 3 - 1 (c) y 3 + 1 (e);
-// 3 - 2 (b) y 3 + 2 (f);
-// 3 - 3 (a) y 3 + 3 (g);
-
 int reverse(char s[]) {
-   int center = (strlen(s) - 1)/2; // Indice central de la cadena.
-   static int sep;
-   int temp, i, j;
+    static int pos; // Static pues así comienza en 0, se mantiene tras llamados, y no se inicializa por cada uno de estos.
+    int temp;
+    int last = (strlen(s) - 1); // Indice del ultimo caracter
 
-    if (center % 2 == 0) { // Si el arreglo tiene una longitud par
-
+    if (pos <= last - pos) { // Si la posicion estudiada desde la izquierda es menor o igual a la estudiada desde el final de la cadena
+        temp = s[pos];
+        s[pos] = s[last - pos];
+        s[last - pos] = temp;
+        ++pos;
+        reverse(s);
     }
-    else { // Si el arreglo tiene una longitud impar
-
-    }   
+    return 0;
 }
 
 void main() {
-    char test[] = "Deberia funcionar la prueba";
+    char test[] = "abcdefg";
 
     printf("String original:  %s.\n", test);
     reverse(test);
