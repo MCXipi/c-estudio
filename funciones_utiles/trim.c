@@ -1,16 +1,14 @@
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 
 // Funcion que quita el \n y \t del final de una cadena.
-void trim(char s[]) {
-    size_t l_index;
+void trim(char *s) {
 
-    for (l_index = (strlen(s) - 1); l_index > 0 && !isgraph(s[l_index]); --l_index)
+    for (; *s; ++s)  // Dejar a *s hasta que sea \0
         ;
-
-    if (l_index >= 0)
-        s[++l_index] = '\0';
-    else
-        printf("Error: Cadena vacia.\n");
+    for (--s; isspace(*s); --s) // Empezar a retroceder s mientras sean espacios en blanco, tabuladores, nuevalinea, etc.
+        ;
+    
+    if (!isspace(*s)) // Si a la letra a la que se llego no es un espacio
+        *++s = '\0'; // Colocar el fin de linea.
 }
