@@ -9,29 +9,36 @@ static char daytab[2][13] = {
 
 int day_of_year (int year, int month, int day) {
     int i, leap;
+    char *start;
 
     leap = year % 4 == 0 && year % 100 != 0 || year % 400 == 0; // leap = 1 si el año es bisiesto (divisible por 4 Y no divisible por 100 O divisible por 400), si no, leap = 0
 
-    if (year < 0 || month < 1 || month > 12 || day < 1 || day > daytab[leap][month]) { // Si es una fecha invalida
+    start = *(daytab + leap) + 1; // Se establece el tipo de año. Una vez se marca el inicio se trabaja como un array unidimensional, iniciando del indice 1
+
+    if (year < 0 || month < 1 || month > 12 || day < 1 || day > *(start + month)) { // Si es una fecha invalida
         printf("error: fecha invalida\n");
         return -1;
     }
     
-    for (i = 1; i < month; i++) // Para cada mes, hasta el anterior del mes entregado
-        day += daytab[leap][i]; // Sumar los días de cada mes correspondiente al año bisiesto o normal
+    for (i = 1; i < month; i++, start++) // Para cada mes, hasta el anterior del mes entregado
+        day += *start; // Sumar los días de cada mes correspondiente al año bisiesto o normal
     return day; // Retornar numero de dias
+
 }
 
 void month_day (int year, int yearday, int *pmonth, int *pday) { // Como debe entregar mes y año la unica alternativa es modificar algo en una direccion. De lo contrario solo se pasará un retorno
     int i, leap;
+    char *start;
 
-     if (year < 0 || yearday > 365 || yearday < 1) // Si el año es menor a 0 y los dias del año superan un año mismo
+    if (year < 0 || yearday > 365 || yearday < 1) // Si el año es menor a 0 y los dias del año superan un año mismo
         printf("error: fecha invalida\n");
 
     leap = year % 4 == 0 && year % 100 != 0 || year % 400 == 0; // leap = 1 si el año es bisiesto (divisible por 4 Y no divisible por 100 O divisible por 400), si no, leap = 0
 
-    for (i = 1; yearday > daytab[leap][i]; i++) // Mientras queden días en la cuenta de día del año, correspondientes a más de un solo mes
-        yearday -= daytab[leap][i]; // Quitar a la cuenta la cantidad de días del mes ya pasado
+    start = *(daytab + leap) + 1; // Se establece el tipo de año. Una vez se marca el inicio se trabaja como un array unidimensional, iniciando del indice 1
+
+    for (i = 1; yearday > *start; i++, start++) // Mientras queden días en la cuenta de día del año, correspondientes a más de un solo mes
+        yearday -= *start; // Quitar a la cuenta la cantidad de días del mes ya pasado
 
     *pmonth = i; // Cuando for pare significa que los días que quedan en la cuenta son del ultimo mes i estudiado.
     *pday = yearday;  
