@@ -9,8 +9,8 @@ int saveline(char *s, int lim) {
         *s = c;
 
     if (c == '\n')
-        *s++ = c;
-    *s = '\0';
+        *s = c;
+    *++s = '\0';
 
     return i;
 }
