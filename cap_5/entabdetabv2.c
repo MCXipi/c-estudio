@@ -47,30 +47,48 @@ char savechar (char c) {
 }
 
 static char spacebuf[MAXCHARS];
-static int i_spacebuf;
+static int i_spacebuf; // Al final solo entab necesitó este buffer, por lo que podrían haber sido variables automaticas, de menos espacio e importancia.
 
 void entab (int m, int n) {
-    int c, i;
-
-    while((c = getch()) != EOF) // Mientras el caracter de entrada no sea EOF
-        if (c == ' ' && i_spacebuf < n) // Si es un espacio guardarlo en el buffer e ir sumando al indice
-            spacebuf[i_spacebuf++];
+    int c, i, cols = 1;
+    printf("entab: Type your line.\n");
+    while((c = getch()) != '\n') { // Mientras el caracter de entrada no sea \0, es decir, ya no hay más entrada
+        if (c == ' ' && i_spacebuf < n && cols >= m) // Si es un espacio, pasada la columna de estudio inicial m, guardarlo en el buffer e ir sumando al indice
+            spacebuf[i_spacebuf++] = ' ';
         else if (i_spacebuf == n) { // Si el indice indica suficientes espacios para un tabulador, escribe un tabulador y guarda el caracter ignorado
             savechar(c);
             putchar('t');
             i_spacebuf = 0; // Reinicia indice del buffer.
         }
         else if (i_spacebuf > 0) { // Si c no es espacio y hay caracteres en el buffer de espacios
-            for (i = 0; i <= i_spacebuf; ++i)
+            for (i = 0; i < i_spacebuf; ++i)
                 putchar(spacebuf[i]); // Escribir todos los caracteres en blanco
+            i_spacebuf = 0;
             putchar(c); // Escribir el caracter siguiente
         }
         else // En cualquier otro caso, osea si no es espacio y el i_spacebuf es 0
             putchar(c); // Escribir la letra.
+        ++cols; // Aumentar el numero de columna estudiada.
+    }
+    putchar('\n');
 }
 
 void detab (int m, int n) {
+    int cols = 1, sp, c, i;
 
+    printf("detab: Type your line.\n");
+    while((c = getch()) != '\n') { // Mientras el caracter pedido no sea nueva linea
+        if (c == '\t' && cols >= m) { // Si el caracter es un tab y la columna es igual o mayor a la inicial
+            for (i = 0, sp = 0; (sp = n * i - cols) <= 0; ++i) // Para un i, aumentarlo hasta que multiplicado por n, la resta con la columna actual sea positiva, es decir, que falten espacios a la derecha para alcanzarlo
+                ;
+            for (; sp; --sp)
+                putchar(' '); // Poner los espacios en blanco faltantes
+        }
+        else
+            putchar(c);
+        ++cols; // Aumentar el numero de columna
+    }
+    putchar('\n');
 }
 
 // La sintaxis permitirá entonces .\programa {-d | -e | -d -e} < -<m> + n | <n> > donde si no se especifica n, este será 8.
@@ -115,13 +133,12 @@ int main (int argc, char **argv) {
             printf("Syntax: {-detab | -entab | -detab -entab} {-<m> + n | n >}\n");
             return NULL;
         }
-
     }
-    printf("m=%d, n=%d\n", m, n);
-    if (ent)
+
+    if (ent) // Si se pidió entab o detab o ambos en las opciones, llamar a la funcion.
         entab(m, n);
     if (det)
         detab(m, n);
-    return 0;
+    return 1;
     
 }
