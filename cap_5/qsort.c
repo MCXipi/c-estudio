@@ -35,8 +35,10 @@ char buff[MAXSPACE];
 char *buffp = buff; // buffp inicialmente apuntaba a 0. Debe comenzar como la misma direccion inicial en buff
 
 char *alloc (int sp) {
-    if (sp < MAXSPACE - (buffp - buff)) // Si hay espacio disponible
-        return (buffp += sp); // Establecer la nueva direccion como la posicion del buffer
+    if (sp < MAXSPACE - (buffp - buff)) { // Si hay espacio disponible
+        buffp += sp; // Correccion   
+        return (buffp - sp); // Establecer la nueva direccion como la posicion del buffer ---> Incorrecto, retorno un puntero que deja un espacio entre linea y linea.
+    }
     else {
         printf("alloc: not enough space.\n");
         return NULL;
