@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 
 // Ejemplo de la seccion 5.11 para usar de base para los ejercicios.
 
@@ -142,42 +143,89 @@ int numcmp (char *s1, char *s2) { // Compara s1 y s2 al volverlos double; ve cua
         return 0;
 }
 
-void qsort_ascend(void *v[], int left, int right, int (*comp) (void *, void *)) { // Funcion qsort_ascend, no retorna nada; recibe array de punteros, dos indices, y un apuntador a funcion que retorna entero, y que recibe dos punteros genericos
-    int i, last;
-
-    if (left >= right) 
-        return; // Tope de recursion, si el indice izquierdo supera al derecho ya no hay qué ordenar.
-    
-    swap(v, left, (left + right) / 2); // Intercambio elemento izquierdo con el de la mitad, a estudiar
-    last = left; // Inicializar ultimo elemento comparado
-    for (i = left + 1; i <= right; i++) // Para todos los elementos en el rango de elementos a estudiar
-        if ((*comp)(v[i], v[left]) < 0) // Si el retorno de la funcion apuntada por comp, entregandole el valor estudiado con elemento de más a la izquierda, es menor a 0, osea v[i] es menor a v[left]
-            swap(v, ++last, i); // Cambiar el elemento i en cuestion para ponerlo lo más a la izquierda del arreglo, junto a left.
-    swap(v, left, last); // Intercambiar el ultimo elemento menor a left con left.
-    qsort_ascend(v, left, last-1, comp); // Iniciar la recursion al lado izquierdo, de los menores al elemento medio, entregando la direccion de la funcion a utilizar.
-    qsort_ascend(v, last + 1, right, comp); // Iniciar la recursion al lado derecho, de los mayores al elemento medio, entregando la direccion de la funcion a utilizar.    
+void all_tolower(char *ptr) {
+    while(*ptr)
+        *ptr++ = tolower(*ptr);
 }
 
-void qsort_descend(void *v[], int left, int right, int (*comp) (void *, void *)) { // Funcion qsort_descend, no retorna nada; recibe array de punteros, dos indices, y un apuntador a funcion que retorna entero, y que recibe dos punteros genericos
+void cleanstr(char ptr[]) {
+    int i, j;
+
+    for (i = j = 0; ptr[i]; i++, j++)
+        if (isalnum(ptr[i]) || isspace(ptr[i]))
+            ptr[j] = ptr[i];
+        else
+            --j; 
+}
+
+void qsort_ascend(void *v[], int left, int right, int (*comp) (void *, void *), int eq, int dir_mode) { // Funcion qsort_ascend, no retorna nada; recibe array de punteros, dos indices, y un apuntador a funcion que retorna entero, y que recibe dos punteros genericos
     int i, last;
+    char temp_a[MAXLEN];
+    char temp_b[MAXLEN];
 
     if (left >= right) 
-        return; // Tope de recursion, si el indice izquierdo supera al derecho ya no hay qué ordenar.
+        return; 
     
-    swap(v, right, (left + right) / 2); // Intercambio elemento derecho con el elemento medio a estudiar
-    last = right; // Inicializar ultimo elemento comparado
-    for (i = right - 1; i >= left; i--) // Para todos los elementos en el rango de elementos a estudiar
-        if ((*comp)(v[i], v[right]) < 0) // Si el retorno de la funcion apuntada por comp, entregandole el valor estudiado con elemento de más a la izquierda, es menor a 0, osea v[i] es menor a v[left]
-            swap(v, --last, i); // Cambiar el elemento i en cuestion para ponerlo lo más a la izquierda del arreglo, junto a left.
-    swap(v, right, last); // Intercambiar el ultimo elemento menor a left con left.
-    qsort_descend(v, left, last-1, comp); // Iniciar la recursion al lado izquierdo, de los menores al elemento medio, entregando la direccion de la funcion a utilizar.
-    qsort_descend(v, last + 1, right, comp); // Iniciar la recursion al lado derecho, de los mayores al elemento medio, entregando la direccion de la funcion a utilizar.    
+    swap(v, left, (left + right) / 2); 
+    last = left;
+    for (i = left + 1; i <= right; i++) {
+        strcpy(temp_a, v[i]); // Copiar las lineas estudiadas
+        strcpy(temp_b, v[left]);
+
+        if (dir_mode) { // Si están en modo orden de directorio, limpiar de caracteres no alfanumericos.
+            cleanstr(temp_a);
+            cleanstr(temp_b);
+        }
+        if (eq) { // Si se igualan mayusculas y minusculas poner en minusculas las dos copias.
+            all_tolower(temp_a);
+            all_tolower(temp_b);
+        }
+
+        if ((*comp)(temp_a, temp_b) < 0) // Hacer la comparacion entre las copias, pasadas a minusculas o no.
+            swap(v, ++last, i);
+        
+    }
+    swap(v, left, last);
+    qsort_ascend(v, left, last-1, comp, eq, dir_mode); 
+    qsort_ascend(v, last + 1, right, comp, eq, dir_mode); 
+}
+
+void qsort_descend(void *v[], int left, int right, int (*comp) (void *, void *), int eq, int dir_mode) { // Funcion qsort_descend, no retorna nada; recibe array de punteros, dos indices, y un apuntador a funcion que retorna entero, y que recibe dos punteros genericos
+    int i, last;
+    char temp_a[MAXLEN];
+    char temp_b[MAXLEN];
+
+    if (left >= right) 
+        return; 
+    
+    swap(v, right, (left + right) / 2); 
+    last = right; 
+    for (i = right - 1; i >= left; i--)  {
+        strcpy(temp_a, v[i]); // Copiar las lineas estudiadas
+        strcpy(temp_b, v[right]);
+
+        if (dir_mode) { // Si están en modo orden de directorio, limpiar de caracteres no alfanumericos.
+            cleanstr(temp_a);
+            cleanstr(temp_b);
+        }
+        if (eq) {
+            all_tolower(temp_a);
+            all_tolower(temp_b);
+        }
+
+        if ((*comp)(temp_a, temp_b) < 0)
+            swap(v, --last, i);
+    }
+    swap(v, right, last); 
+    qsort_descend(v, left, last-1, comp, eq, dir_mode);
+    qsort_descend(v, last + 1, right, comp, eq, dir_mode);   
 }
 
 int main (int argc, char *argv[]) {
     int nlines;
-    int numeric = 0; // "Bool" para el uso de la comparacion numerica o lexicografica.
-    int descend = 0; // Bool para ordenamiento ascendiente o descendiente
+    int numeric, descend, eq, dir_mode; // "Bools" para las distintas opciones entregables
+
+    numeric = descend = eq = dir_mode = 0;
 
     if (argc > 1) // Si hay más de un argumento y el adicional es la opcion -n, poner verdadero al bool de comparacion numerica.
         for (--argc; argc > 0; --argc) // Para cada uno de los argumentos adicionales
@@ -188,16 +236,23 @@ int main (int argc, char *argv[]) {
                 case 'r':
                     descend = 1;
                     break;
+                case 'f':
+                    eq = 1;
+                    break;
+                case 'd':
+                    dir_mode = 1;
+                    break;
                 default:
-                    printf("Error: Opcion invalida.\nUso: [-n] [-r]");
+                    printf("\nError: Opcion invalida.\nUso: [-n] [-r]");
                     return 1;
             }
     
     if ((nlines = readlines(lineptr)) > 0) { // Si hay lineas
         if (!descend)
-            qsort_ascend((void **) lineptr, 0, nlines - 1, (int (*) (void *, void *)) (numeric ? numcmp : strcmp));
+            qsort_ascend((void **) lineptr, 0, nlines - 1, (int (*) (void *, void *)) (numeric ? numcmp : strcmp), eq, dir_mode);
         else
-            qsort_descend((void **) lineptr, 0, nlines - 1, (int (*) (void *, void *)) (numeric ? numcmp : strcmp));
+            qsort_descend((void **) lineptr, 0, nlines - 1, (int (*) (void *, void *)) (numeric ? numcmp : strcmp), eq, dir_mode);
+
         writelines(lineptr, nlines);
         return 0;
     }
