@@ -8,10 +8,10 @@
 #define MAXLEN 1000
 #define MAXCAMP 10
 #define MAXOPLEN 5
-#define MAXBUFLEN 60
+#define MAXBUFLEN 70
 #define MAXCAMPS 50000
 
-enum options {N, R, F, D};
+enum options {N, R, F, D, O};
 
 char **lineptr[MAXLINES]; // Lineptr es un arreglo de apuntadores a arreglos de apuntadores a char. La notacion anterior al parecer requeria de la creacion de arrays de 10 elemetnos por NLINES
 
@@ -78,7 +78,7 @@ char *alloc_line (int sp) {
     }
 }
 
-int readlines (char **lineptr[]) {
+int readlines (char **lineptr[], int *m_cmp) {
     int len, nlines, i, cmp;
     char *p, **c, line[MAXLEN];
 
@@ -92,18 +92,24 @@ int readlines (char **lineptr[]) {
             strcpy(p, line); // Copiar la linea (temporal) a p (espacio en almacenamiento)
             for (i = cmp = 0; cmp < 10; ++i) {
                 if (i == 0) {
-                    c = save_campo(p); // El primer campo es el inicio de la linea, que al mismo tiempo guarda toda la linea
+                    for (i; isspace(*(p + i)); ++i)
+                        ;
+                    c = save_campo(p + i); // El primer campo es el inicio de la linea, que al mismo tiempo guarda toda la linea
                     lineptr[nlines] = c;
                     ++cmp;
                 }
-                else if (isspace(*(p + i))) { // Si es espacio, ignorar todos los demás espacios y guardar el campo desde el proximo caracter
-                    for (i; isspace(*(p + i)); ++i)
+                else if (*(p + i) == ',') { // Si es coma, ignorar todos los espacios y guardar el campo desde el proximo caracter
+                    for (++i; isspace(*(p + i)); ++i)
                         ;
                     c = save_campo(p + i);
                     ++cmp;
                 }
+                else if (*(p + i) == '\n') {
+                    (*m_cmp) = cmp;
+                    break;
+                }
             }
-            end_campo(); // Terminar el array de campos con '\0
+            end_campo(); // Terminar el array de campos con NULL     
             ++nlines;
         }
     }
@@ -200,70 +206,7 @@ void cleanstr(char ptr[]) {
             --j; 
 }
 
-void qsort_ascend(void **v[], int left, int right, int (*comp) (void *, void *), int eq, int dir_mode) { // Funcion qsort_ascend, no retorna nada; recibe array de punteros, dos indices, y un apuntador a funcion que retorna entero, y que recibe dos punteros genericos
-    int i, last;
-    char temp_a[MAXLEN];
-    char temp_b[MAXLEN];
-
-    if (left >= right) 
-        return; 
-    
-    swap(v, left, (left + right) / 2); 
-    last = left;
-    for (i = left + 1; i <= right; i++) {
-        strcpy(temp_a, (const char *) *v[i]); // Copiar las lineas estudiadas
-        strcpy(temp_b, (const char *) *v[left]);
-
-        if (dir_mode) { // Si están en modo orden de directorio, limpiar de caracteres no alfanumericos.
-            cleanstr(temp_a);
-            cleanstr(temp_b);
-        }
-        if (eq) { // Si se igualan mayusculas y minusculas poner en minusculas las dos copias.
-            all_tolower(temp_a);
-            all_tolower(temp_b);
-        }
-
-        if ((*comp)(temp_a, temp_b) < 0)  // Hacer la comparacion entre las copias, pasadas a minusculas o no.
-            swap(v, ++last, i);
-
-    }
-    swap(v, left, last);
-    qsort_ascend(v, left, last-1, comp, eq, dir_mode); 
-    qsort_ascend(v, last + 1, right, comp, eq, dir_mode); 
-}
-
-void qsort_descend(void **v[], int left, int right, int (*comp) (void *, void *), int eq, int dir_mode) { // Funcion qsort_descend, no retorna nada; recibe array de punteros, dos indices, y un apuntador a funcion que retorna entero, y que recibe dos punteros genericos
-    int i, last;
-    char temp_a[MAXLEN];
-    char temp_b[MAXLEN];
-
-    if (left >= right) 
-        return; 
-    
-    swap(v, right, (left + right) / 2); 
-    last = right; 
-    for (i = right - 1; i >= left; i--)  {
-        strcpy(temp_a, (const char *) *v[i]); // Copiar las lineas estudiadas
-        strcpy(temp_b, (const char *) *v[right]);
-
-        if (dir_mode) { // Si están en modo orden de directorio, limpiar de caracteres no alfanumericos.
-            cleanstr(temp_a);
-            cleanstr(temp_b);
-        }
-        if (eq) {
-            all_tolower(temp_a);
-            all_tolower(temp_b);
-        }
-
-        if ((*comp)(temp_a, temp_b) < 0)
-            swap(v, --last, i);
-    }
-    swap(v, right, last); 
-    qsort_descend(v, left, last-1, comp, eq, dir_mode);
-    qsort_descend(v, last + 1, right, comp, eq, dir_mode);   
-}
-
-static char *camp_options[MAXCAMP]; // Array de punteros a opciones de campo en forma "(0/1)(0/1)(0/1)(0/1)" en orden n, r, f, d. Almacenados en un indice equivalente al campo. Maximo 9 campos.
+static char *camp_options[MAXCAMP]; // Array de punteros a opciones de campo en forma "(0/1)(0/1)(0/1)(0/1)(0/1)" en orden n, r, f, d, ordenar, donde ordenar indica si se debe considerar o no. Almacenados en un indice equivalente al campo. Maximo 9 campos.
 static char options_buff[MAXBUFLEN]; // Buffer para guardar opciones
 static char *options_buff_i = options_buff; // Direccion de espacio libre para escribir opciones
 
@@ -280,31 +223,119 @@ int saveopt (int n_cmp, char *str_op) {
     }
 }
 
+void camp_copy(void **v[], char *copy_to, int max, int line, int campo) { // Devuelve la copia de un campo 
+    int i;
+
+    for (i = 0; isspace(((char **) v[line])[campo][i]) || ((char **) v[line])[campo][i] == ','; ++i) // Ignorar espacios y comas
+        ;
+    for (i; ((char **) v[line])[campo][i] != ',' && ((char **) v[line])[campo][i] != '\n' && i < max; ++i) // Mientras la letra de ese campo no sea una coma (Osea el fin del campo), copiar
+        *copy_to++ = ((char **) v[line])[campo][i];
+    
+    if (((char **) v[line])[campo][i] == ',' || ((char **) v[line])[campo][i] == '\n') { // Si el ultimo carcter es coma poner final de linea
+        *copy_to++ = '\n';
+        *copy_to = '\0';
+    }
+    else if (i == max) // Si no queda espacio
+        printf("Error: Not enough space (camp_copy).\n");
+}
+
+void qsort_camps (void **v[], char *opciones[], int left, int right, int (*comp)(void *, void *), int campo) {
+    int numcmp (char *, char*);
+    int i, last, r, f, d, o;
+    char temp_a[MAXLEN], temp_b[MAXLEN]; 
+    
+    if (campo < 0) // Freno de recursión de campos, si ya no hay más campos que comparar.
+        return;
+    for (i = 1; opciones[campo][i]; ++i) { // Guardar las opciones de dicho campo menos n que depende del llamado
+        if (i == 1)
+            r = opciones[campo][i] - '0';
+        else if (i == 2)
+            f = opciones[campo][i] - '0';
+        else if (i == 3)
+            d = opciones[campo][i] - '0';
+        else if (i == 4)
+            o = opciones[campo][i] - '0';
+    }
+
+    if (left >= right) // Freno de recursión de comparación de lineas
+        return;
+
+    if (r && o) { // Orden descendiente si se debe ordenar el campo o no
+        swap(v, right, (right + left)/2);
+        last = right;
+
+        for (i = right - 1; i >= left; --i) {
+            camp_copy(v, temp_a, MAXLEN, i, campo); // Copiar la palabra del campo lineptr[i][campo]
+            camp_copy(v, temp_b, MAXLEN, right, campo); // Copiar la palabra del campo lineptr[right][campo]
+
+            if (d) { // Si están en modo orden de directorio, limpiar de caracteres no alfanumericos.
+                cleanstr(temp_a);
+                cleanstr(temp_b);
+            }
+            if (f) { // Si se igualan mayusculas y minusculas poner en minusculas las dos copias.
+                all_tolower(temp_a);
+                all_tolower(temp_b);
+            }
+
+            if ((*comp)(temp_a, temp_b) < 0)  // Hacer la comparacion entre las copias, pasadas a minusculas o no.
+                swap(v, --last, i);
+        }
+        swap(v, last, right);
+    }
+    else if (o) { // Orden ascendente y se debe ordenar
+        swap(v, left, (right + left)/2);
+        last = left;
+        
+        for (i = left + 1; i <= right; ++i) {
+            camp_copy(v, temp_a, MAXLEN, i, campo); // Copiar la palabra del campo lineptr[i][campo]
+            camp_copy(v, temp_b, MAXLEN, left, campo); // Copiar la palabra del campo lineptr[right][campo]
+
+            if (d) { // Si están en modo orden de directorio, limpiar de caracteres no alfanumericos.
+                cleanstr(temp_a);
+                cleanstr(temp_b);
+            }
+            if (f) { // Si se igualan mayusculas y minusculas poner en minusculas las dos copias.
+                all_tolower(temp_a);
+                all_tolower(temp_b);
+            }
+
+            if ((*comp)((void *)temp_a, (void *)temp_b) < 0)  // Hacer la comparacion entre las copias, pasadas a minusculas o no.
+                swap(v, ++last, i);
+            
+        }
+        swap(v, last, left);
+    }
+    if (o) { // Si el campo se debe ordenar
+        qsort_camps(v, opciones, left, last - 1, comp, campo);
+        qsort_camps(v, opciones, last + 1, right, comp, campo);
+    }
+    if (--campo >= 0) // Si quedan campos
+        qsort_camps(v, opciones, left, right, (opciones[campo][0] - '0') ? numcmp : strcmp, campo); // Recursion de campo
+    else
+        return;
+}
+
 int main (int argc, char *argv[]) {
-    int nlines, i, n_campo, campos, mayor_cmp;
+    int nlines, i, n_campo, mayor_cmp;
     char opstr[MAXOPLEN];
 
-    mayor_cmp = n_campo = campos = 0;
+    mayor_cmp = n_campo = 0;
     
     for (i = 0; i < MAXCAMP; ++i)
-        saveopt(i, "0000"); // Inicializar todas las opciones en 0.
+        saveopt(i, "00000"); // Inicializar todas las opciones en 0.
 
     if (argc > 1) 
         for (--argc, ++argv; argc > 0; --argc, ++argv) { // Para cada uno de los argumentos adicionales
-            strcpy(opstr, "0000"); // Inicializar la opcion del campo como 0000
+            strcpy(opstr, "00000"); // Inicializar la opcion del campo como 00000
             i = 0;
 
             if ((*argv)[i] == '-') { // Si es una opcion
-                ++campos;
                 ++i;
 
                 if (isdigit((*argv)[i])) {
-                        n_campo = (*argv)[i] - '0'; // Establecer n° de campo
+                        n_campo = (*argv)[i] - '0' - 1; // Establecer n° de campo
                         ++i;
                 }
-
-                if (n_campo > mayor_cmp)
-                    mayor_cmp = n_campo; // Establecer el mayor campo
 
                 for (i; (*argv)[i]; ++i) { // Para cada caracter de la opcion
                     switch((*argv)[i]) { // Construir opciones para el campo.
@@ -325,6 +356,7 @@ int main (int argc, char *argv[]) {
                             return 1;
                     }
                 }
+                opstr[O] = '1'; // Poner que se debe ordenar
             }
             else { // Si no es
                 printf("Error: Opcion invalida.\nUso: [-[num][n][r][f][d] ... | -[n][r][f][d]]");
@@ -332,20 +364,12 @@ int main (int argc, char *argv[]) {
             }
             saveopt(n_campo, opstr);
         }   
-    else { // Si no hay argumentos, guarda las opciones para el campo 1 predeterminado y establece 1 a la cantidad de campos.
-        saveopt(n_campo, "0000");
-        ++campos;
-    }
+    else // Si no hay argumentos, guarda las opciones para el campo 0 predeterminado
+        saveopt(n_campo, "00001");
     
-    if ((nlines = readlines(lineptr)) > 0) { // Si hay lineas
-        if (campos == 1) // Si solo hay un campo
-            if (!(camp_options[0][R] - '0'))
-                qsort_ascend((void ***) lineptr, 0, nlines - 1, (int (*) (void *, void *)) (camp_options[0][N] - '0' ? numcmp : strcmp), camp_options[0][F] - '0', camp_options[0][D] - '0');
-            else
-                qsort_descend((void ***) lineptr, 0, nlines - 1, (int (*) (void *, void *)) (camp_options[0][N] - '0' ? numcmp : strcmp), camp_options[0][F] - '0', camp_options[0][D] - '0');
-        
-        
-
+    if ((nlines = readlines(lineptr, &mayor_cmp)) > 0) { // Si hay lineas
+        printf("%d\n", mayor_cmp);
+        qsort_camps((void ***) lineptr, camp_options, 0, nlines - 1, (camp_options[mayor_cmp][0] - '0') ? numcmp : strcmp, mayor_cmp);
         writelines(lineptr, nlines);
         return 0;
     }
