@@ -2,7 +2,7 @@
 
 // Funcion getch y ungetch que se usan mucho pasado el capitulo 3.
 
-#define MAXBUF 100
+#define MAXBUF 1000
 
 static int buf[MAXBUF], buf_i;
 
