@@ -59,7 +59,7 @@ char *getvar (char *s, int max) {
             return NULL;
         }
 
-        else if (isspace(c) || c == ';') { // Si es espacio o punto coma, cerrar la cadena temporal, y verificar si es palabra reservada.
+        else if (isspace(c) || c == ';' || c == '=') { // Si es espacio, asignacion o punto coma, cerrar la cadena temporal, y verificar si es palabra reservada.
             *wrt_tempword = '\0';
             
             if (!verify_token(tempword)) // Si no es cadena reservada, y la palabra tiene tamaño aceptable, dejar getch en la sig. palabra, escribir en s y retornar s. 
@@ -83,8 +83,9 @@ char *getvar (char *s, int max) {
 
         else if (c == '(') { // Si es una funcion, limpiar palabra temporal y llegar hasta la siguiente palabra
             wrt_tempword = tempword;
-            while ((c = getch()) != ')' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
-                    ;
+            
+            while ((c = getch()) != '\n' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
+               ;
             if (c == EOF) { // Si hay EOF retornar error
                 printf("EOF Syntax Error.\n");
                 return NULL;
