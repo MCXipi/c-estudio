@@ -1,10 +1,6 @@
-#include <string.h>
-#include <ctype.h>
+#include "var_groups_header.h"
 #include "..\..\funciones_utiles\getch_ungetch.c"
 #include "..\..\funciones_utiles\verify.c"
-
-#define MAXWORDLEN 100
-enum bool {FALSE, TRUE};
 
 char *writeword(char *dest, char *src, int max) {
     // Revisa si la palabra en src tiene un tamaño aceptable y la escribe en dest.
@@ -71,7 +67,7 @@ char *getvar (char *s, int max) {
             
             if (c == '(') // Si el caracter es un parentesis, es una funcion. Saltar argumentos y continuar.
                 skip_args();
-            else if (!verify_token(tmp_word)) { // Si el token no es reservado, escribir en arreglo y retornar. Si es reservado, seguir.
+            else if (!verify_token(tmp_word)) { // Si el token no es funcion y no es reservado, escribir en arreglo y retornar. Si es reservado, seguir.
                 ungetch(c);
                 writeword(s, tmp_word, max);
                 return s;
