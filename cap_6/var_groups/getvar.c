@@ -4,6 +4,7 @@
 #include "..\..\funciones_utiles\verify.c"
 
 #define MAXWORDLEN 100
+enum bool {FALSE, TRUE};
 
 char *writeword(char *dest, char *src, int max) {
     // Revisa si la palabra en src tiene un tamaño aceptable y la escribe en dest.
@@ -19,131 +20,65 @@ char *writeword(char *dest, char *src, int max) {
     }
 }
 
-int nextword(int *c) {
-    // LLega hasta la siguiente palabra o caracter importante
-    // Retorna el caracter
-    
-    while (!isalpha(*c = getch()) && *c != '"' && *c != '\'' && *c != EOF && *c != '/' && *c != '#')
-        ;
+void skip_string() {
+    int c;
 
-    return *c;
+    while ((c = getch()) != '"' && c != '\'') // Pedir caracteres hasta que se cierre el comentario. Si es secuencia de escape ignorarlo.
+        if (c == '\\')
+            c = getch();
+}
+
+void skip_args() {
+    int c;
+
+    while((c = getch()) != ')') // Mientras no terminen los argumentos, llamarse a si misma si dentro hay otra funcion, y si hay string llamar a su funcion
+        if (c == '(')
+            skip_args();
+        else if (c == '"')
+            skip_string();
 }
 
 char *getvar (char *s, int max) { 
-    // Lee la entrada y distigue entre palabras reservadas, nombres de funciones,
-    // y variables, ya sea "comunes" o arreglos, y escribe los nombres de variables en *s.
-    // Retorna s si hubo exito, nulo si no hay variables o hubo error.
+    int c, i;
+    char tmp_word[MAXWORDLEN];
 
-    char tempword[MAXWORDLEN]; // Arreglo para guardar temporalmente la palabra, y puntero para escribirla.
-    char *wrt_tempword = tempword;
-    int c;
-    
-    *wrt_tempword = '\0';
+    while((c = getch()) != EOF) {
+        ungetch(c);
 
-    for (nextword(&c); c != EOF; ) { // Pedir letras hasta que getch se quede sin palabras...
-        if(isalnum(c) && (wrt_tempword - tempword) < MAXWORDLEN) {
-            if (wrt_tempword == tempword && isalpha(c)) { // Si el primer caracter es alfabetico, anotar
-                *wrt_tempword++ = c;
-                c = getch();
-            }
-            else if (wrt_tempword > tempword) { // Para cualquier otro caracter anotar libremente
-                *wrt_tempword++ = c;
-                c = getch();
-            }
-            else // Si el primer caracter es numerico, no es variable.
-                nextword(&c);
-        }
+        while (isspace(c = getch())) // Ignorar espacios.
+            ;
 
-        else if ((wrt_tempword - tempword) >= MAXWORDLEN) { // Si no hay espacio mandar error.
-            printf("Error: Palabra demasiado larga.\n");
-            return NULL;
-        }
-
-        else if (isspace(c) || c == ';' || c == '=') { // Si es espacio, asignacion o punto coma, cerrar la cadena temporal, y verificar si es palabra reservada.
-            *wrt_tempword = '\0';
-            
-            if (!verify_token(tempword)) // Si no es cadena reservada, y la palabra tiene tamaño aceptable, dejar getch en la sig. palabra, escribir en s y retornar s. 
-                return writeword(s, tempword, max);
-            else { // Si es cadena reservada, limpiar cadena temporal y llegar hasta la siguiente palabra.
-                wrt_tempword = tempword;
-                nextword(&c);
-            }
-        }
-
-        else if (c == '[') { // Si es un arreglo, dejar getch en la siguiente palabra, copiar en s y retornar s si hay espacio suficiente. 
-            while ((c = getch()) != ']' && c != EOF) // Llegar hasta el fin de la declaracion o EOF si hay syntax error
+        if (c == '#' || c == '/') // Si es preprocesador o comentario cambiar de linea.
+            while((c = getch()) != '\n')
                 ;
-            if (c == EOF) { // Si hubo EOF retornar error, si no, continuar
-                printf("EOF Syntax Error.\n");
-                return NULL;
-            }
-            *wrt_tempword = '\0';
-            return writeword(s, tempword, max);
-        }
+        else if (c == '"' || c == '\'') // Si es una cadena llamar a funcion para saltarla
+            skip_string();
 
-        else if (c == '(') { // Si es una funcion, limpiar palabra temporal y llegar hasta la siguiente palabra
-            wrt_tempword = tempword;
-            
-            while ((c = getch()) != '\n' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
-               ;
-            if (c == EOF) { // Si hay EOF retornar error
-                printf("EOF Syntax Error.\n");
-                return NULL;
-            }
-            nextword(&c);
-        }
-
-        else if (c == '"') { // Si es comilla doble, llegar hasta el fin del string o EOF, y luego a la siguiente palabra o comilla
-            while ((c = getch()) != '"' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
-                    ;
-            if (c == EOF) { // Si hay EOF retornar error
-                printf("EOF Syntax Error.\n");
-                return NULL;
-            }
-            nextword(&c);
-        }
-
-        else if (c == '\'') { // Si es comilla simple, llegar al fin de la comilla simple e ir a la siguiente palabra.
-            while ((c = getch()) != '\'' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
-                    ;
-            if (c == EOF) { // Si hay EOF retornar error
-                printf("EOF Syntax Error.\n");
-                return NULL;
-            }
-            nextword(&c);
-        }
-
-        else if (c == '/') { // Si es una diagonal o orden de preprocesador
-            if ((c = getch()) == '/') { // Si es orden de prep, o el sig. c es diagonal, entonces llegar hasta la siguiente linea.
-                while ((c = getch()) != '\n' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
-                        ;
-                if (c == EOF) { // Si hay EOF retornar error
-                    printf("EOF Syntax Error.\n");
-                    return NULL;
-                }
-                nextword(&c);
-            }
-            else // Si no es comentario, seguir hasta la siguiente palabra
-                nextword(&c);
-        }
-
-        else if (c == '#') {
-            while ((c = getch()) != '\n' && c != EOF) // Llegar hasta el fin de la declaracion o EOF en syntax error
+        else if (c == '[') // Si es arreglo, saltarse todo lo que haya dentro.
+            while((c = getch()) != ']')
                 ;
-            if (c == EOF) { // Si hay EOF retornar error
-                printf("EOF Syntax Error.\n");
-                return NULL;
-            }
-            nextword(&c);
-        }
 
-        else { // En cualquier otro caso, llegar hasta la siguiente palabra
-            nextword(&c);
-            if (c == EOF) { // Si hay EOF retornar error
-                printf("EOF Syntax Error.\n");
-                return NULL;
+        else if (isalpha(c)) { // Si es un token que parte por letra
+            ungetch(c);
+
+            for (i = 0; isalnum(c = getch()) || c == '_'; ++i) // Escribir token en palabra temporal
+                tmp_word[i] = c;
+            tmp_word[i] = '\0';
+            ungetch(c);
+
+            while (isspace(c = getch())) // Quitar espacios despues del token
+                ;
+            
+            if (c == '(') // Si el caracter es un parentesis, es una funcion. Saltar argumentos y continuar.
+                skip_args();
+            else if (!verify_token(tmp_word)) { // Si el token no es reservado, escribir en arreglo y retornar. Si es reservado, seguir.
+                ungetch(c);
+                writeword(s, tmp_word, max);
+                return s;
             }
+            else
+                ungetch(c);
         }
     }
-    return NULL; // Retorno si no hay más variables.
+    return NULL;
 }
