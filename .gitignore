@@ -6,3 +6,4 @@
 *.o
 test?.c
 test?.txt
+test?r.txt
