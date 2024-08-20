@@ -5,7 +5,8 @@ enum {WORD, EQ};
 struct word {
     char *word;
     int line;
-    struct word *another;
+    struct word *another_lower;
+    struct word *another_major;
     struct equal_word *equal_branch;
 };
 
@@ -84,14 +85,18 @@ struct word *sort_word (struct word *to_study, char *word, int nline) {
         to_study = (struct word *) struct_alloc(WORD);
         to_study->word = copy_word(word);
         to_study->line = nline;
-        to_study->another = NULL;
+        to_study->another_lower = NULL;
+        to_study->another_major = NULL;
         to_study->equal_branch = NULL;
     }
 
-    else if (lower_cmp(word, to_study->word) != 0) 
-        to_study->another = sort_word(to_study->another, word, nline);
+    else if (lower_cmp(word, to_study->word) < 0) 
+        to_study->another_lower = sort_word(to_study->another_lower, word, nline);
     
-    else if (lower_cmp(word, to_study->word) == 0) 
+    else if (lower_cmp(word, to_study->word) > 0) 
+        to_study->another_major = sort_word(to_study->another_major, word, nline);
+    
+    else
         to_study->equal_branch = eqword_sort(to_study->equal_branch, nline);
     
     return to_study;    
@@ -112,6 +117,8 @@ void get_branch_toprint(struct word *str) {
     // Funcion para imprimir cada palabra y sus lineas
     // Imprime la palabra y su linea de aparicion, luego las demás apariciones si existen, y continua hacia la siguiente palabra, si existe.
     // Que exista al menos un nodo depende de main.
+    if (str->another_lower != NULL)
+        get_branch_toprint(str->another_lower);
 
     printf(str->equal_branch != NULL ? "%s, en las lineas %d" : "%s, en la linea %d" , str->word, str->line); // Verifica si hay mas apariciones para poner "linea" o "lineas"
 
@@ -119,6 +126,6 @@ void get_branch_toprint(struct word *str) {
         print_branch(str->equal_branch);
     printf(".\n");
 
-    if (str->another != NULL)
-        get_branch_toprint(str->another);
+    if (str->another_major != NULL)
+        get_branch_toprint(str->another_major);
 }
