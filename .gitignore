@@ -7,3 +7,7 @@
 test?.c
 test?.txt
 test?r.txt
+*_test.c
+*_testr.c
+*_test.txt
+*_testr.txt
