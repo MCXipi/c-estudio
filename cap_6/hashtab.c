@@ -5,7 +5,6 @@
 #include "..\funciones_utiles\getch_ungetch.c"
 
 #define HASHSIZE 101
-#define MAXLEN 100
 
 // ====================== Ejercicio 6-5 ======================
 
@@ -121,60 +120,3 @@ struct nlist *install (char *name, char *defn) {
         return NULL;
     return np;
 }
-
-// ====================== Main y ejercicio 6-6 ======================
-
-char *getcon (char *fname, char *fdefn, int max) {
-    // Funcion que obtiene las variables name y defn desde una declaracion de preprocesador 
-    // Consideranda la declaracion en formato #define "nombre" "defn"\n
-    // Comprueba si el primer caracter de la linea es "#", y si no es, avanza hasta la siguiente linea.
-    // Si es ese caracter, se obtiene la palabra que está directamente despues, y comprueba que sea "define". Si no es, no hace nada
-    // Si es define, obtiene el texto hasta el siguiente espacio que correspondría a name, y el texto hasta '\n' que corresponde a defn, si es que hay.
-    // Retorna el puntero de fname si escribió con exito. NULL si no pudo escribir nada o terminó la entrada.
-
-    int c, i;
-    char temp[MAXLEN];
-
-    while ((c = getch()) != EOF)
-        if (c == '#') {
-            for (i = 0; !isspace(c = getch()); ++i)
-                temp[i] = c;
-            temp[i] = '\0';
-
-            if (strcmp(temp, "define") == 0) {
-                for (i = 0; i < max && !isspace(c = getch()); ++i)
-                    *(fname + i) = c;
-                *(fname + i) = '\0';
-
-                while(c != '\n' && isspace(c = getch()))
-                    ;
-                ungetch(c);
-                
-                if (c != '\n') {
-                    for (i = 0; i < max && (c = getch()) != '\n'; ++i)
-                        *(fdefn + i) = c;
-                    *(fdefn + i) = '\0';
-                }
-                else
-                    *(fdefn) = '\0';
-
-                return fname;
-            }
-        }
-        else
-            while((c = getch()) != '\n')
-                ;
-    
-    return NULL;
-}
-
-int main () {
-    char name[MAXLEN], defn[MAXLEN];
-    int i;
-    struct nlist *np; 
-
-    while(getcon(name, defn, MAXLEN) != NULL)
-        install(name, defn);
-}
-
-// cl hashtab.c; Get-Content hashtab_test.c | .\hashtab > hashtab_testr.txt
