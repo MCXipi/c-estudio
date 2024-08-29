@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+// Experimentación que usé para entender la relacion int - char.
+
 void main() {
     unsigned char unsigned_test = 0; /*Permite almacenar enteros entre 0 y 255*/
     signed char signed_test = 0; /*Permite almacenar enteros entre los vaalores entre -128 a 127*/

@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+// Ejemplo de enum de la seccion 2.3
+
 enum months {ENE = 1, FEB, MAR, ABRIL}; /*Se define la enumeracion como una secuencia que parte del 1*/
 
 main() {

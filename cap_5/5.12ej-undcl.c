@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include "..\funciones_utiles\getch_ungetch.c"
 
-// Copia del ejemplo de la seccion 5.12 para mejor entendimiento.
 
 #define MAXTOKEN 100
 

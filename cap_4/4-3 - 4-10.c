@@ -2,7 +2,7 @@
 #include <math.h>
 #include <ctype.h>
 
-// Copia en un mismo archivo del ejemplo de la seccion 4.4 en otro orden para mejor entendimiento, agregando hasta el ejercicio 4-4.
+// Ejercicios del 4-3 hasta el 4-10. Todos de la seccion 4-3.
 
 #define MAXOP 100
 #define BUFSIZE 100

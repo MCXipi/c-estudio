@@ -30,12 +30,3 @@ void main() {
     printf("%s", palabra);
 }
 
-//Orden de precedencia:
-// 1. Operadores aritméticos.
-// 2. Operadores de relación.
-// 3. Operadores de igualdad.
-// 4. Operadores Bitwise.
-// 5. Operador &&.
-// 6. Operador ||.
-// 7. Expresión condicional ?:
-// 8. Operadores de asignación.
